@@ -7,6 +7,7 @@ import urllib.request
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Iterable, Sequence
+from contextlib import ExitStack
 
 from ru_address.common import Common
 from ru_address.core import Core
@@ -14,6 +15,7 @@ from ru_address.dump import ConverterRegistry as DumpConverterRegistry
 from ru_address.output import OutputRegistry
 from ru_address.storage import resolve_storage
 
+DEFAULT_SCHEMA_URL = 'https://fias.nalog.ru/docs/gar_schemas.zip'
 
 @dataclass(frozen=True)
 class DatabaseConfig:
@@ -28,6 +30,7 @@ class DatabaseConfig:
 @dataclass(frozen=True)
 class PipelineOptions:
     source: str
+    schema: str | None
     tables: Sequence[str]
     regions: Sequence[str]
     jobs: int | None = None
@@ -77,15 +80,17 @@ def _import_dump(config: DatabaseConfig, dump_path: str):
         raise RuntimeError(f'psql exited with code {result.returncode}')
 
 
-def _process_common_tables(zip_path: str, tables: Sequence[str], db_config: DatabaseConfig):
+def _process_common_tables(zip_path: str, schema_path: str, tables: Sequence[str], db_config: DatabaseConfig):
     common_tables = [table for table in tables if table in Core.COMMON_TABLE_LIST]
     if not common_tables:
         return
     Common.cli_output('Processing common tables')
     with tempfile.TemporaryDirectory() as tmpdir:
         dump_destination = os.path.join(tmpdir, 'common.sql')
-        with resolve_storage(zip_path) as storage:
-            converter = DumpConverterRegistry.init_converter('psql', storage, storage)
+        with ExitStack() as stack:
+            source_storage = stack.enter_context(resolve_storage(zip_path))
+            schema_storage = stack.enter_context(resolve_storage(schema_path))
+            converter = DumpConverterRegistry.init_converter('psql', source_storage, schema_storage)
             output = OutputRegistry.init_output('direct', converter, dump_destination, include_meta=True)
             output.write(common_tables, [])
         _import_dump(db_config, dump_destination)
@@ -107,15 +112,17 @@ def _filter_region_tables(tables: Sequence[str]) -> list[str]:
     return [table for table in tables if table in Core.REGION_TABLE_LIST]
 
 
-def _process_region(zip_path: str, region: str, tables: Sequence[str], db_config: DatabaseConfig):
+def _process_region(zip_path: str, schema_path: str, region: str, tables: Sequence[str], db_config: DatabaseConfig):
     region_tables = _filter_region_tables(tables)
     if not region_tables:
         return
     Common.cli_output(f'Processing region {region}')
     failed_dump_path = os.path.join(os.getcwd(), f'{region}_failed.sql')
     with tempfile.TemporaryDirectory() as tmpdir:
-        with resolve_storage(zip_path) as storage:
-            converter = DumpConverterRegistry.init_converter('psql', storage, storage)
+        with ExitStack() as stack:
+            source_storage = stack.enter_context(resolve_storage(zip_path))
+            schema_storage = stack.enter_context(resolve_storage(schema_path))
+            converter = DumpConverterRegistry.init_converter('psql', source_storage, schema_storage)
             output = OutputRegistry.init_output('per_region', converter, tmpdir, include_meta=True)
             output.write(region_tables, [region])
         dump_path = os.path.join(tmpdir, f'{region}.{converter.get_extension()}')
@@ -127,7 +134,7 @@ def _process_region(zip_path: str, region: str, tables: Sequence[str], db_config
             raise
 
 
-def _run_region_pool(zip_path: str, regions: Iterable[str], tables: Sequence[str],
+def _run_region_pool(zip_path: str, schema_path: str, regions: Iterable[str], tables: Sequence[str],
                      db_config: DatabaseConfig, jobs: int | None):
     region_tables = _filter_region_tables(tables)
     if not region_tables:
@@ -136,7 +143,7 @@ def _run_region_pool(zip_path: str, regions: Iterable[str], tables: Sequence[str
     Common.cli_output(f'Starting pool with {executor_workers} workers')
     with ProcessPoolExecutor(max_workers=executor_workers) as executor:
         futures = {
-            executor.submit(_process_region, zip_path, region, region_tables, db_config): region
+            executor.submit(_process_region, zip_path, schema_path, region, region_tables, db_config): region
             for region in regions
         }
         for future in as_completed(futures):
@@ -155,9 +162,14 @@ def execute_pipeline(options: PipelineOptions, db_config: DatabaseConfig):
         archive_path = os.path.abspath(archive_path)
         if not archive_path.lower().endswith('.zip'):
             raise ValueError('Pipeline expects source archive in ZIP format')
-        _process_common_tables(archive_path, options.tables, db_config)
+        schema_source = options.schema or DEFAULT_SCHEMA_URL
+        schema_path, schema_downloaded = download_archive(schema_source, workdir)
+        schema_path = os.path.abspath(schema_path)
+        if not schema_path.lower().endswith('.zip'):
+            raise ValueError('Pipeline expects schema archive in ZIP format')
+        _process_common_tables(archive_path, schema_path, options.tables, db_config)
         regions = _collect_regions(archive_path, options.regions)
-        _run_region_pool(archive_path, regions, options.tables, db_config, options.jobs)
+        _run_region_pool(archive_path, schema_path, regions, options.tables, db_config, options.jobs)
         if downloaded and options.keep_zip:
             destination = os.path.join(os.getcwd(), os.path.basename(archive_path))
             if not os.path.exists(destination):

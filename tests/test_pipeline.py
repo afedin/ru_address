@@ -5,6 +5,7 @@ import zipfile
 from types import SimpleNamespace
 from unittest import mock
 import sys
+from typing import Tuple
 
 try:
     import lxml.etree  # noqa: F401
@@ -67,29 +68,33 @@ XML_CONTENT = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 
-def build_archive(base_dir: str) -> str:
-    archive_path = os.path.join(base_dir, 'sample.zip')
-    with zipfile.ZipFile(archive_path, 'w') as archive:
-        archive.writestr('schema/AS_ADDR_OBJ.XSD', XSD_CONTENT)
+def build_archives(base_dir: str) -> Tuple[str, str]:
+    data_path = os.path.join(base_dir, 'data.zip')
+    with zipfile.ZipFile(data_path, 'w') as archive:
         archive.writestr('77/AS_ADDR_OBJ_20250131.XML', XML_CONTENT)
-    return archive_path
+    schema_path = os.path.join(base_dir, 'schema.zip')
+    with zipfile.ZipFile(schema_path, 'w') as archive:
+        archive.writestr('AS_ADDR_OBJ.XSD', XSD_CONTENT)
+    return data_path, schema_path
 
 
 class ZipStorageTest(unittest.TestCase):
     def test_zip_storage_lists_regions_and_opens_files(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            archive_path = build_archive(tmpdir)
-            storage = ZipStorage(archive_path)
+            data_path, schema_path = build_archives(tmpdir)
+            data_storage = ZipStorage(data_path)
+            schema_storage = ZipStorage(schema_path)
             try:
-                self.assertEqual(storage.list_regions(), ['77'])
-                with storage.open_schema('ADDR_OBJ') as schema_stream:
+                self.assertEqual(data_storage.list_regions(), ['77'])
+                with schema_storage.open_schema('ADDR_OBJ') as schema_stream:
                     data = schema_stream.read()
                     self.assertIn(b'AddrObj', data)
-                with storage.open_table('ADDR_OBJ', '77') as table_stream:
+                with data_storage.open_table('ADDR_OBJ', '77') as table_stream:
                     data = table_stream.read()
                     self.assertIn(b'Object', data)
             finally:
-                storage.close()
+                data_storage.close()
+                schema_storage.close()
 
 
 class DirectoryStorageTest(unittest.TestCase):
@@ -132,7 +137,7 @@ class PostgresConverterTest(unittest.TestCase):
 class PipelineRegionTest(unittest.TestCase):
     def test_process_region_creates_dump_and_invokes_import(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            archive_path = build_archive(tmpdir)
+            data_path, schema_path = build_archives(tmpdir)
             db_config = DatabaseConfig(database='gar')
 
             called = {}
@@ -143,7 +148,7 @@ class PipelineRegionTest(unittest.TestCase):
                 self.assertTrue(os.path.exists(dump_path))
 
             with mock.patch('ru_address.pipeline._import_dump', side_effect=fake_import):
-                _process_region(archive_path, '77', ['ADDR_OBJ'], db_config)
+                _process_region(data_path, schema_path, '77', ['ADDR_OBJ'], db_config)
 
             self.assertIn('config', called)
             self.assertEqual(called['config'].database, 'gar')

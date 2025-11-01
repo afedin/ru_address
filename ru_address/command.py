@@ -124,9 +124,10 @@ def dump(target, regions, tables, mode, source_path, output_path, schema_path):
 @click.option('--password', type=str, default=None, help='Database password')
 @click.option('--database', type=str, default=None, help='Database name')
 @click.option('--keep-zip', is_flag=True, help='Keep downloaded archive after completion')
+@click.option('--schema', type=str, default=None, help='Schema source (path or URL); defaults to GAR official link')
 @click.argument('source', type=str)
 @command_summary
-def pipeline(regions, tables, jobs, dsn, host, port, user, password, database, keep_zip, source):
+def pipeline(regions, tables, jobs, dsn, host, port, user, password, database, keep_zip, schema, source):
     """\b
     Run full pipeline: download archive, prepare dumps and import them into PostgreSQL.
     """
@@ -144,6 +145,7 @@ def pipeline(regions, tables, jobs, dsn, host, port, user, password, database, k
         raise click.UsageError('Either --dsn or --database must be provided')
     options = PipelineOptions(
         source=source,
+        schema=schema,
         tables=tables,
         regions=regions,
         jobs=jobs,
