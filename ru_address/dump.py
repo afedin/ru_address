@@ -1,17 +1,12 @@
-import glob
-import os.path
+import os
 from abc import ABC, abstractmethod
 from typing import TextIO
 
 from ru_address.errors import UnknownPlatformError
 from ru_address.source.xml import Definition, Data
 from ru_address.core import Core
-from ru_address.common import Common, TableRepresentation
-
-
-def regions_from_directory(source_path: str):
-    matched = glob.glob('*', root_dir=source_path)
-    return [f for f in matched if f.isnumeric()]
+from ru_address.common import TableRepresentation
+from ru_address.storage import BaseStorage
 
 
 class ConverterRegistry:
@@ -24,11 +19,11 @@ class ConverterRegistry:
         return available.get(alias, None)
 
     @staticmethod
-    def init_converter(alias: str, source_path: str, schema_path: str):
+    def init_converter(alias: str, source_storage: BaseStorage, schema_storage: BaseStorage):
         _converter = ConverterRegistry.get_converter(alias)
         if _converter is None:
             raise UnknownPlatformError()
-        return _converter(source_path, schema_path)
+        return _converter(source_storage, schema_storage)
 
     @staticmethod
     def get_available_platforms() -> dict:
@@ -48,25 +43,22 @@ class BaseDumpConverter(ABC):
     """
     Base converter for platform
     """
-    def __init__(self, source_path: str, schema_path: str):
-        self.source_path = source_path
-        self.schema_path = schema_path
+    def __init__(self, source_storage: BaseStorage, schema_storage: BaseStorage):
+        self.source_storage = source_storage
+        self.schema_storage = schema_storage
         self.batch_size = int(os.environ.get("RA_BATCH_SIZE", "500"))
 
     def convert_table(self, file: TextIO, table_name: str, sub: str | None = None):
         dump_file = file
 
         tables = Core.get_known_tables()
-        source_filepath = Common.get_source_filepath(self.schema_path, tables[table_name], 'xsd')
-        definition = Definition(table_name, source_filepath)
+        entity_name = tables[table_name]
+        with self.schema_storage.open_schema(entity_name) as schema_stream:
+            definition = Definition(table_name, schema_stream)
 
-        path = self.source_path
-        if sub is not None:
-            path = os.path.join(self.source_path, sub)
-
-        source_filepath = Common.get_source_filepath(path, table_name, 'xml')
-        data = Data(table_name, source_filepath, self.get_representation())
-        data.convert_and_dump(dump_file, definition, self.batch_size)
+        with self.source_storage.open_table(table_name, sub) as data_stream:
+            data = Data(table_name, data_stream, self.get_representation())
+            data.convert_and_dump(dump_file, definition, self.batch_size)
 
     @staticmethod
     @abstractmethod
@@ -92,8 +84,8 @@ class MyConverter(BaseDumpConverter):
     MySQL (and MySQL forks) compatible converter
     See: https://mariadb.com/kb/en/insert/
     """
-    def __init__(self, source_path: str, schema_path: str):
-        BaseDumpConverter.__init__(self, source_path, schema_path)
+    def __init__(self, source_storage: BaseStorage, schema_storage: BaseStorage):
+        BaseDumpConverter.__init__(self, source_storage, schema_storage)
         self.encoding = os.environ.get("RA_SQL_ENCODING", "utf8mb4")
 
     @staticmethod

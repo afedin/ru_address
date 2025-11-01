@@ -1,5 +1,6 @@
 import os
 import time
+from contextlib import ExitStack
 from functools import update_wrapper
 import click
 from ru_address.common import Common
@@ -8,7 +9,8 @@ from ru_address.core import Core
 from ru_address.errors import UnknownPlatformError
 from ru_address.output import OutputRegistry
 from ru_address.schema import ConverterRegistry as SchemaConverterRegistry
-from ru_address.dump import ConverterRegistry as DumpConverterRegistry, regions_from_directory
+from ru_address.dump import ConverterRegistry as DumpConverterRegistry
+from ru_address.storage import resolve_storage
 
 
 def command_summary(f):
@@ -35,7 +37,7 @@ def cli(_, env):
 @click.option('-t', '--table', 'tables', type=str, multiple=True,
               default=Core.get_known_tables().keys(), help='Limit table list to process')
 @click.option('--no-keys', is_flag=True, help='Exclude keys && column index')
-@click.argument('source_path', type=click.types.Path(exists=True, file_okay=False, readable=True))
+@click.argument('source_path', type=click.types.Path(exists=True, file_okay=True, dir_okay=True, readable=True))
 @click.argument('output_path', type=click.types.Path(file_okay=True, readable=True, writable=True))
 @command_summary
 def schema(target, tables, no_keys, source_path, output_path):
@@ -46,7 +48,9 @@ def schema(target, tables, no_keys, source_path, output_path):
     else dumps all tables into single file.
     """
     converter = SchemaConverterRegistry.init_converter(target)
-    output = converter.process(source_path, tables, not no_keys)
+    with ExitStack() as stack:
+        storage = stack.enter_context(resolve_storage(source_path))
+        output = converter.process(storage, tables, not no_keys)
     if os.path.isdir(output_path):
         for key, value in output.items():
             f = open(os.path.join(output_path, f'{key}.{converter.get_extension()}'), "w", encoding="utf-8")
@@ -69,9 +73,9 @@ def schema(target, tables, no_keys, source_path, output_path):
               default=Core.get_known_tables(), help='Limit table list to process')
 @click.option('-m', '--mode', type=click.Choice(OutputRegistry.get_available_modes_list()),
               default='region_tree', help='Dump output mode (only if `output_path` argument is a valid directory)')
-@click.argument('source_path', type=click.types.Path(exists=True, file_okay=False, readable=True))
+@click.argument('source_path', type=click.types.Path(exists=True, file_okay=True, dir_okay=True, readable=True))
 @click.argument('output_path', type=click.types.Path(file_okay=True, readable=True, writable=True))
-@click.argument('schema_path', type=click.types.Path(exists=True, file_okay=False, readable=True), required=False)
+@click.argument('schema_path', type=click.types.Path(exists=True, file_okay=True, dir_okay=True, readable=True), required=False)
 @command_summary
 def dump(target, regions, tables, mode, source_path, output_path, schema_path):
     """\b
@@ -81,10 +85,8 @@ def dump(target, regions, tables, mode, source_path, output_path, schema_path):
     if schema_path is None:
         schema_path = source_path
 
-    if len(regions) == 0:
-        regions = regions_from_directory(source_path)
+    regions = list(regions)
 
-    #
     if not os.path.isdir(output_path):
         mode = 'direct'
 
@@ -94,9 +96,19 @@ def dump(target, regions, tables, mode, source_path, output_path, schema_path):
         if mode != 'region_tree':
             raise UnknownPlatformError("Cant mix multiple tables in single file")
 
-    converter = DumpConverterRegistry.init_converter(target, source_path, schema_path)
-    output = OutputRegistry.init_output(mode, converter, output_path, include_meta)
-    output.write(tables, regions)
+    with ExitStack() as stack:
+        source_storage = stack.enter_context(resolve_storage(source_path))
+        if schema_path == source_path:
+            schema_storage = source_storage
+        else:
+            schema_storage = stack.enter_context(resolve_storage(schema_path))
+
+        if len(regions) == 0:
+            regions = source_storage.list_regions()
+
+        converter = DumpConverterRegistry.init_converter(target, source_storage, schema_storage)
+        output = OutputRegistry.init_output(mode, converter, output_path, include_meta)
+        output.write(tables, regions)
 
 
 cli.add_command(schema)

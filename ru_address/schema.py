@@ -1,4 +1,4 @@
-import os.path
+import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 import lxml.etree as et
@@ -9,6 +9,7 @@ from ru_address.errors import UnknownPlatformError
 from ru_address.index import Index
 from ru_address.core import Core
 from ru_address.common import Common
+from ru_address.storage import BaseStorage
 
 
 class ConverterRegistry:
@@ -49,9 +50,9 @@ class BaseSchemaConverter(ABC):
         self.index_stylesheet_file = index_stylesheet_file
         self.options = options
 
-    def process(self, source_path: str, tables: list[str], include_keys: bool):
+    def process(self, storage: BaseStorage, tables: list[str], include_keys: bool):
         output = OrderedDict()
-        definitions = self.generate_definitions(source_path, Core.KNOWN_ENTITIES)
+        definitions = self.generate_definitions(storage, Core.KNOWN_ENTITIES)
         known_tables = Core.get_known_tables()
         for table_name in tables:
             target_entity = known_tables[table_name]
@@ -61,12 +62,12 @@ class BaseSchemaConverter(ABC):
         return output
 
     @staticmethod
-    def generate_definitions(source_path: str, entities: list[str]):
+    def generate_definitions(storage: BaseStorage, entities: list[str]):
         output = OrderedDict()
         for entity in entities:
             Common.cli_output(entity)
-            source_file = Common.get_source_filepath(source_path, entity, 'xsd')
-            definition = Definition(entity, source_file)
+            with storage.open_schema(entity) as source_file:
+                definition = Definition(entity, source_file)
             output[entity] = definition
         return output
 
