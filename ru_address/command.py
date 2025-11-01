@@ -11,6 +11,7 @@ from ru_address.output import OutputRegistry
 from ru_address.schema import ConverterRegistry as SchemaConverterRegistry
 from ru_address.dump import ConverterRegistry as DumpConverterRegistry
 from ru_address.storage import resolve_storage
+from ru_address.pipeline import execute_pipeline, DatabaseConfig, PipelineOptions
 
 
 def command_summary(f):
@@ -110,9 +111,49 @@ def dump(target, regions, tables, mode, source_path, output_path, schema_path):
         output = OutputRegistry.init_output(mode, converter, output_path, include_meta)
         output.write(tables, regions)
 
+@cli.command()
+@click.option('-r', '--region', 'regions', type=str, multiple=True,
+              default=[], help='Limit region list to process')
+@click.option('-t', '--table', 'tables', type=str, multiple=True,
+              default=Core.get_known_tables(), help='Limit table list to process')
+@click.option('--jobs', type=int, default=None, help='Number of worker processes to use')
+@click.option('--dsn', type=str, default=None, help='PostgreSQL DSN string')
+@click.option('--host', type=str, default=None, help='Database host')
+@click.option('--port', type=int, default=None, help='Database port')
+@click.option('--user', type=str, default=None, help='Database user')
+@click.option('--password', type=str, default=None, help='Database password')
+@click.option('--database', type=str, default=None, help='Database name')
+@click.option('--keep-zip', is_flag=True, help='Keep downloaded archive after completion')
+@click.argument('source', type=str)
+@command_summary
+def pipeline(regions, tables, jobs, dsn, host, port, user, password, database, keep_zip, source):
+    """\b
+    Run full pipeline: download archive, prepare dumps and import them into PostgreSQL.
+    """
+    tables = list(tables) if tables else list(Core.get_known_tables())
+    regions = list(regions)
+    db_config = DatabaseConfig(
+        dsn=dsn,
+        host=host,
+        port=port,
+        user=user,
+        password=password,
+        database=database,
+    )
+    if db_config.dsn is None and db_config.database is None:
+        raise click.UsageError('Either --dsn or --database must be provided')
+    options = PipelineOptions(
+        source=source,
+        tables=tables,
+        regions=regions,
+        jobs=jobs,
+        keep_zip=keep_zip,
+    )
+    execute_pipeline(options, db_config)
 
 cli.add_command(schema)
 cli.add_command(dump)
+cli.add_command(pipeline)
 
 if __name__ == '__main__':
     cli()

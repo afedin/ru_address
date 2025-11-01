@@ -126,6 +126,22 @@ ru_address: обработка БД ГАР (ex. ФИАС/КЛАДР)
   # Экспорт всех таблиц в один файл
   $ ru_address dump /путь/к/файлам /путь/для/экспорта/dump.sql /путь/к/xsd-схеме
 
+Pipeline:
+^^^^^^^^^
+
+Команда ``ru_address pipeline`` автоматизирует скачивание ZIP архива ГАР, разбиение загрузки по регионам и импорт в PostgreSQL через ``psql``.
+
+Параметры подключения могут передаваться либо в виде DSN, либо перечислением ``--host``/``--port``/``--user``/``--database`` (пароль — через ``--password``).
+Опция ``--jobs`` задаёт число воркеров (по умолчанию — количество CPU), ``--keep-zip`` оставляет скачанный ZIP в текущей директории.
+
+.. code-block:: shell
+
+  # Импортируем весь архив, используя DSN и 4 параллельных воркера
+  $ ru_address pipeline --dsn postgresql://user:pass@localhost/gar --jobs 4 https://example.org/gar.zip
+  # Работаем с локальным архивом, ограничиваем таблицы и регионы
+  $ ru_address pipeline --host localhost --user gar --database gar_db --password secret \
+      --table=ADDR_OBJ --table=HOUSES --region=77 --region=50 /путь/к/gar.zip
+
 FAQ
 ---------
 Как передать ENV параметры в приложение?
