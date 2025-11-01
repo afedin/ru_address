@@ -39,6 +39,7 @@ if HAS_PIPELINE:
 else:
     DatabaseConfig = None  # type: ignore
 
+from ru_address.dump import PostgresConverter  # noqa: E402
 from ru_address.storage import ZipStorage  # noqa: E402
 
 
@@ -115,6 +116,16 @@ class DirectoryStorageTest(unittest.TestCase):
                     self.assertIn(b'Object', data)
             finally:
                 storage.close()
+
+
+class PostgresConverterTest(unittest.TestCase):
+    def test_batch_start_handler_uses_lowercase_names(self):
+        representation = PostgresConverter.get_representation()
+        handler = representation.batch_start_handler
+        sql = handler('ADDR_OBJ', ['ID', 'NAME'])
+        self.assertIn('INSERT INTO "addr_obj"', sql)
+        self.assertIn('"id"', sql)
+        self.assertIn('"name"', sql)
 
 
 @unittest.skipUnless(LXML_AVAILABLE and HAS_PIPELINE, 'pipeline region test requires Python 3.10+ and lxml')

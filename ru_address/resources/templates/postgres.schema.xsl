@@ -8,13 +8,15 @@
     <xsl:param name="include_drop" />
     
     <xsl:template match="/">
+        <xsl:variable name="lc_table_name" select="translate($table_name,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')" />
         <xsl:if test="$include_drop = '1'">
-            <xsl:text>DROP TABLE IF EXISTS "</xsl:text><xsl:value-of select="$table_name"/><xsl:text>";&#xa;</xsl:text>
+            <xsl:text>DROP TABLE IF EXISTS "</xsl:text><xsl:value-of select="$lc_table_name"/><xsl:text>";&#xa;</xsl:text>
         </xsl:if>
-        <xsl:text>CREATE TABLE "</xsl:text><xsl:value-of select="$table_name"/><xsl:text>" (&#xa;</xsl:text>
+        <xsl:text>CREATE TABLE "</xsl:text><xsl:value-of select="$lc_table_name"/><xsl:text>" (&#xa;</xsl:text>
         <xsl:for-each select=".//xs:complexType[1]/xs:attribute">
+            <xsl:variable name="lc_attr_name" select="translate(normalize-space(@name),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')" />
             <!-- Column -->
-            <xsl:text>  "</xsl:text><xsl:value-of select="normalize-space(@name)"/><xsl:text>" </xsl:text>
+            <xsl:text>  "</xsl:text><xsl:value-of select="$lc_attr_name"/><xsl:text>" </xsl:text>
 
             <!-- Column Type -->
             <xsl:choose>
@@ -89,18 +91,19 @@
         <xsl:if test="/xs:schema/xs:element[1]/xs:annotation/xs:documentation">
             <xsl:text>&#xa;</xsl:text>
             <xsl:text>COMMENT ON TABLE "</xsl:text>
-            <xsl:value-of select="$table_name" />
+            <xsl:value-of select="$lc_table_name" />
             <xsl:text>" IS </xsl:text>
             <xsl:text>'</xsl:text><xsl:value-of select="/xs:schema/xs:element[1]/xs:annotation/xs:documentation"/><xsl:text>';&#xa;</xsl:text>
         </xsl:if>
 
         <!-- Column comments -->
         <xsl:for-each select=".//xs:complexType[1]/xs:attribute">
+            <xsl:variable name="lc_attr_name" select="translate(normalize-space(@name),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')" />
             <xsl:if test="xs:annotation/xs:documentation">
                 <xsl:text>COMMENT ON COLUMN "</xsl:text>
-                <xsl:value-of select="$table_name" />
+                <xsl:value-of select="$lc_table_name" />
                 <xsl:text>"."</xsl:text>
-                <xsl:value-of select="normalize-space(@name)" />
+                <xsl:value-of select="$lc_attr_name" />
                 <xsl:text>" IS </xsl:text>
                 <xsl:choose>
                     <xsl:when test="contains(xs:annotation/xs:documentation,'&#xa;')">

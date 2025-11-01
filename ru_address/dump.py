@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from abc import ABC, abstractmethod
 from typing import TextIO
@@ -148,9 +150,11 @@ class PostgresConverter(BaseDumpConverter):
     @staticmethod
     def get_representation() -> TableRepresentation:
         def batch_start_handler(table_name: str, fields: list[str]):
-            field_query = "\", \"".join(fields)
+            normalized_table = table_name.lower()
+            normalized_fields = [field.lower() for field in fields]
+            field_query = "\", \"".join(normalized_fields)
             return (
-                f'INSERT INTO "{table_name}" ("{field_query}") VALUES \n'
+                f'INSERT INTO "{normalized_table}" ("{field_query}") VALUES \n'
             )
 
         # Escape backslash and value quotes
