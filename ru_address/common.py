@@ -45,19 +45,23 @@ class Common:
 
     @staticmethod
     def get_source_filepath(source_path, table, extension):
-        """ Ищем файл таблицы в папке с исходниками,
-        Названия файлов в непонятном формате, например AS_ACTSTAT_2_250_08_04_01_01.xsd"""
-        found_files = []
-        for _extension in [extension.lower(), extension.upper()]:
-            file = f'AS_{table}_2*.{_extension}'
-            file_path = os.path.join(source_path, file)
-            found_files = found_files + glob.glob(file_path)
+        """Совместим с новыми и старыми именами файлов (AS_TABLE_*, AS_TABLE.*)."""
+        matches = []
+        patterns = []
+        for candidate_ext in {extension.lower(), extension.upper()}:
+            patterns.extend([
+                f'AS_{table}_*.{candidate_ext}',
+                f'AS_{table}.{candidate_ext}',
+            ])
+        for pattern in patterns:
+            matches.extend(sorted(glob.glob(os.path.join(source_path, pattern))))
 
-        if len(found_files) == 1:
-            return found_files[0]
-        if len(found_files) > 1:
-            raise FileNotFoundError(f'More than one file found: {file_path}')
-        raise FileNotFoundError(f'Not found source file: {file_path}')
+        unique_matches = list(dict.fromkeys(matches))
+        if len(unique_matches) == 1:
+            return unique_matches[0]
+        if len(unique_matches) > 1:
+            raise FileNotFoundError(f'More than one file found for table {table}')
+        raise FileNotFoundError(f'Not found source file for table {table}')
 
 
 class DataSource:

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import fnmatch
 import glob
 import os
@@ -42,21 +44,32 @@ class DirectoryStorage(BaseStorage):
         self.base_path = base_path
 
     def _search(self, directory: str, table: str, extension: str) -> str:
-        patterns = [
-            f'AS_{table}_2*.{extension.lower()}',
-            f'AS_{table}_2*.{extension.upper()}',
-        ]
+        matches: list[str] = []
+        patterns: list[str] = []
+        for ext_variant in {extension.lower(), extension.upper()}:
+            patterns.extend([
+                f'AS_{table}_*.{ext_variant}',
+                f'AS_{table}.{ext_variant}',
+            ])
         for pattern in patterns:
-            matches = glob.glob(os.path.join(directory, pattern))
-            if len(matches) == 1:
-                return matches[0]
-            if len(matches) > 1:
-                raise FileNotFoundError(f'More than one file found: {os.path.join(directory, pattern)}')
-        raise FileNotFoundError(f'Not found source file: {os.path.join(directory, patterns[0])}')
+            matches.extend(sorted(glob.glob(os.path.join(directory, pattern))))
+        unique_matches = list(dict.fromkeys(matches))
+        if len(unique_matches) == 1:
+            return unique_matches[0]
+        if len(unique_matches) > 1:
+            raise FileNotFoundError(f'More than one file found for table {table} in {directory}')
+        raise FileNotFoundError(f'Not found source file for table {table} in {directory}')
 
     def list_regions(self) -> list[str]:
-        matched = glob.glob('*', root_dir=self.base_path)
-        return sorted([f for f in matched if f.isnumeric() and os.path.isdir(os.path.join(self.base_path, f))])
+        try:
+            entries = os.listdir(self.base_path)
+        except FileNotFoundError:
+            return []
+        regions = [
+            entry for entry in entries
+            if entry.isnumeric() and os.path.isdir(os.path.join(self.base_path, entry))
+        ]
+        return sorted(regions)
 
     @contextmanager
     def open_schema(self, entity: str) -> Iterator[BinaryIO]:
@@ -100,8 +113,14 @@ class ZipStorage(BaseStorage):
     def _matches(self, name: str, directory: Optional[str], table: str, extension: str) -> bool:
         normalized = name.replace('\\', '/')
         basename = os.path.basename(normalized)
-        pattern = f'as_{table.lower()}_2*.{extension.lower()}'
-        if not fnmatch.fnmatch(basename.lower(), pattern):
+        base_lower = basename.lower()
+        extension_lower = extension.lower()
+        table_lower = table.lower()
+        patterns = [
+            f'as_{table_lower}_*.{extension_lower}',
+            f'as_{table_lower}.{extension_lower}',
+        ]
+        if not any(fnmatch.fnmatch(base_lower, pattern) for pattern in patterns):
             return False
         path_parts = normalized.split('/')[:-1]
         if directory is None:
