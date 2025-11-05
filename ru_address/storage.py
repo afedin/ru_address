@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import fnmatch
+import re
 import glob
 import os
 import zipfile
@@ -116,11 +117,11 @@ class ZipStorage(BaseStorage):
         base_lower = basename.lower()
         extension_lower = extension.lower()
         table_lower = table.lower()
-        patterns = [
-            f'as_{table_lower}_*.{extension_lower}',
-            f'as_{table_lower}.{extension_lower}',
-        ]
-        if not any(fnmatch.fnmatch(base_lower, pattern) for pattern in patterns):
+        
+        # Match AS_{TABLE}_digits or AS_{TABLE}.ext (exact match)
+        # Pattern ensures table name is followed by underscore+digit or extension
+        pattern = rf"as_{re.escape(table_lower)}(_\d|\.{re.escape(extension_lower)}$)"
+        if not re.search(pattern, base_lower):
             return False
         path_parts = normalized.split('/')[:-1]
         if directory is None:
