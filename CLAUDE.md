@@ -20,7 +20,7 @@ pip install .
 ```
 
 ### Running the Tool
-The package provides the `ru_address` command with two main subcommands:
+The package provides the `ru_address` command with four main subcommands:
 
 **Schema conversion:**
 ```bash
@@ -30,6 +30,16 @@ ru_address schema /path/to/xsd /path/to/output --target=[mysql|psql|ch]
 **Data dump conversion:**
 ```bash
 ru_address dump /path/to/xml /path/to/output /path/to/xsd --target=[mysql|psql|csv|tsv]
+```
+
+**Full pipeline (PostgreSQL):**
+```bash
+ru_address pipeline --dsn postgresql://user:pass@host/db --region 83 /path/to/gar.zip
+```
+
+**Database verification:**
+```bash
+ru_address verify --dsn postgresql://user:pass@host/db --expect 35000
 ```
 
 ### Linting
@@ -50,7 +60,7 @@ python -m ru_address.command dump [OPTIONS]
 
 **command.py** (ru_address/command.py)
 - Entry point defining CLI using Click framework
-- Two main commands: `schema` and `dump`
+- Four main commands: `schema`, `dump`, `pipeline`, `verify`
 - Handles environment variable injection via `-e` flag
 - Tracks execution time and memory usage via `@command_summary` decorator
 
@@ -91,6 +101,22 @@ python -m ru_address.command dump [OPTIONS]
 - Uses `resources/index.xml` as source definition
 - Platform-specific index templates in `resources/templates/`
 
+**pipeline.py** (ru_address/pipeline.py)
+- Implements `pipeline` command for automated PostgreSQL import workflow
+- Downloads data archives (HTTP/HTTPS/FTP or local paths)
+- Automatically fetches XSD schemas from https://fias.nalog.ru/docs/gar_schemas.zip
+- Generates SQL dumps and imports them into PostgreSQL via `psql`
+- Supports parallel processing of regions using `ProcessPoolExecutor`
+- Defines `DatabaseConfig` and `PipelineOptions` dataclasses
+
+**verify.py** (ru_address/verify.py)
+- Implements `verify` command for database integrity checking
+- Queries PostgreSQL database to gather statistics on loaded data
+- Reports total address objects, table sizes, and row counts
+- Special handling for `normative_docs` table with nullable `name` field
+- Supports validation against expected object counts with configurable tolerance
+- Defines `TableStats` and `VerificationReport` dataclasses
+
 ### Data Flow
 
 1. **Schema Conversion**: XSD → XSLT Transform → Platform-specific DDL
@@ -122,3 +148,31 @@ Schema and index generation relies heavily on XSLT transformations. Templates ar
 - `{platform}.index.xsl`: Index/key generation
 
 The `index.xml` file defines the minimal set of indexes for all tables.
+
+## Important Fixes
+
+### PostgreSQL String Fields Nullable Fix
+
+**Issue**: The official GAR XSD schemas mark certain string fields (like `normative_docs.name`) as required (`use="required"`), but actual data from FNS contains NULL values in these fields. This caused import failures with errors like:
+
+```
+ERROR: null value in column "name" of relation "normative_docs" violates not-null constraint
+```
+
+**Solution**: Modified `resources/templates/postgres.schema.xsl` (lines 68-79) to make all string fields (`xs:string` type) nullable by default, regardless of XSD schema requirements. This prevents NOT NULL constraints on varchar/text fields, allowing the import to succeed even when source data contains unexpected NULLs.
+
+**Affected Template Logic**:
+```xsl
+<xsl:choose>
+  <!-- String fields are always nullable because actual GAR data contains NULLs even when schema says required -->
+  <xsl:when test="xs:simpleType/xs:restriction/@base='xs:string' or @type='xs:string'">
+    <xsl:text> NULL DEFAULT NULL</xsl:text>
+  </xsl:when>
+  <xsl:when test="@use='required'">
+    <xsl:text> NOT NULL</xsl:text>
+  </xsl:when>
+  ...
+</xsl:choose>
+```
+
+This ensures data integrity while accommodating inconsistencies in official GAR data releases.

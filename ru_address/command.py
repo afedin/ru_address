@@ -12,6 +12,7 @@ from ru_address.schema import ConverterRegistry as SchemaConverterRegistry
 from ru_address.dump import ConverterRegistry as DumpConverterRegistry
 from ru_address.storage import resolve_storage
 from ru_address.pipeline import execute_pipeline, DatabaseConfig, PipelineOptions
+from ru_address.verify import verify_database, check_expected_counts
 
 
 def command_summary(f):
@@ -153,9 +154,43 @@ def pipeline(regions, tables, jobs, dsn, host, port, user, password, database, k
     )
     execute_pipeline(options, db_config)
 
+
+@cli.command()
+@click.option('--dsn', type=str, default=None, help='PostgreSQL DSN string')
+@click.option('--host', type=str, default=None, help='Database host')
+@click.option('--port', type=int, default=None, help='Database port')
+@click.option('--user', type=str, default=None, help='Database user')
+@click.option('--password', type=str, default=None, help='Database password')
+@click.option('--database', type=str, default=None, help='Database name')
+@click.option('--expect', type=int, default=None, help='Expected number of main objects (addr_obj + houses + steads)')
+@click.option('--tolerance', type=float, default=0.1, help='Acceptable deviation (default: 0.1 = 10%%)')
+@command_summary
+def verify(dsn, host, port, user, password, database, expect, tolerance):
+    """\b
+    Verify GAR database data integrity and show statistics.
+    Checks loaded data and displays summary of all tables.
+    """
+    db_config = DatabaseConfig(
+        dsn=dsn,
+        host=host,
+        port=port,
+        user=user,
+        password=password,
+        database=database,
+    )
+    if db_config.dsn is None and db_config.database is None:
+        raise click.UsageError('Either --dsn or --database must be provided')
+
+    report = verify_database(db_config, show_details=True)
+
+    if expect is not None:
+        check_expected_counts(db_config, expect, tolerance)
+
+
 cli.add_command(schema)
 cli.add_command(dump)
 cli.add_command(pipeline)
+cli.add_command(verify)
 
 if __name__ == '__main__':
     cli()
