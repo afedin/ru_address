@@ -66,6 +66,10 @@
 
             <!-- Column required -->
             <xsl:choose>
+                <!-- String fields are always nullable because actual GAR data contains NULLs even when schema says required -->
+                <xsl:when test="xs:simpleType/xs:restriction/@base='xs:string' or @type='xs:string'">
+                    <xsl:text> NULL DEFAULT NULL</xsl:text>
+                </xsl:when>
                 <xsl:when test="@use='required'">
                     <xsl:text> NOT NULL</xsl:text>
                 </xsl:when>
