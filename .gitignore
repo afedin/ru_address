@@ -1,4 +1,5 @@
 .idea/
+/\.claude/
 /import/*
 !/import/.gitkeep
 /output/*
@@ -11,6 +12,7 @@ import.php
 __pycache__/
 *.py[cod]
 *$py.class
+/DEPLOYMENT.md
 
 # C extensions
 *.so

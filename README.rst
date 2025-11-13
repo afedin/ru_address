@@ -6,17 +6,16 @@ ru_address: обработка БД ГАР (ex. ФИАС/КЛАДР)
 
 Установка
 ---------
-Требуется Python 3.6+
+Требуется Python 3.10+
 ::
 
-    $ git clone https://github.com/shadz3rg/ru_address.git && cd ru_address 
-    $ # deprecated python setup.py install
     $ ~/.local/bin/pip install .
 
 Использование
 -------------
 
-| Для начала необходимо скачать актуальную **XSD** схему и **XML** выгрузку с данными ГАР, распаковать на диск.
+| Для начала необходимо скачать актуальную **XSD** схему и **XML** выгрузку с данными ГАР. 
+Поддерживаются как распакованные каталоги, так и **ZIP** архивы (чтение без распаковки).
 Все нужные файлы публикуются на оф. сайте ФНС России https://fias.nalog.ru/Frontend
 
 | Установка пакета дает доступ к исполняемому файлу ``ru_address`` и его под-командам:
@@ -131,15 +130,15 @@ Pipeline:
 
 Команда ``ru_address pipeline`` автоматизирует скачивание XML-архива ГАР, загрузку актуальной XSD-схемы (по умолчанию с https://fias.nalog.ru/docs/gar_schemas.zip), разбиение по регионам и импорт в PostgreSQL через ``psql``.
 
-Параметры подключения могут передаваться либо в виде DSN, либо перечислением ``--host``/``--port``/``--user``/``--database`` (пароль — через ``--password``).
+Параметры подключения могут передаваться либо в виде DSN, либо перечислением ``--host``/``--port``/``--user``/``--database`` (пароль — через ``--password``). Не используйте реальные пароли в документации — применяйте плейсхолдеры или ``.pgpass``.
 Опция ``--jobs`` задаёт число воркеров (по умолчанию — количество CPU), ``--keep-zip`` оставляет скачанный архив данных в текущей директории, ``--schema`` позволяет переопределить путь/URL для XSD-схем.
 
 .. code-block:: shell
 
   # Импортируем весь архив, используя DSN и 4 параллельных воркера
-  $ ru_address pipeline --dsn postgresql://user:pass@localhost/gar --jobs 4 https://example.org/gar.zip
+  $ ru_address pipeline --dsn postgresql://<user>:<password>@<host>/<db> --jobs 4 https://example.org/gar.zip
   # Работаем с локальным архивом, ограничиваем таблицы и регионы
-  $ ru_address pipeline --host localhost --user gar --database gar_db --password secret \
+  $ ru_address pipeline --host localhost --user gar --database gar_db --password <password> \
       --table=ADDR_OBJ --table=HOUSES --region=77 --region=50 /путь/к/gar.zip
 
 FAQ

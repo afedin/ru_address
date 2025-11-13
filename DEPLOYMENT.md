@@ -1,5 +1,7 @@
 # Инструкция по развёртыванию и загрузке данных
 
+Внимание: не используйте реальные пароли в командах и документации. Рекомендуется применять переменные окружения, `.pgpass`, или шаблонные плейсхолдеры вида `postgresql://<user>:<password>@<host>/<db>`.
+
 ## 1. Отправка изменений на сервер
 
 ```bash
@@ -8,18 +10,18 @@ cd ~/Documents/gar/ru_address
 
 # Синхронизация кода на сервер
 rsync -av --exclude='*.pyc' --exclude='__pycache__' --exclude='.git' \
-    ru_address/ iuser@geocoder:~/ru_address/ru_address/
+    ru_address/ user@server.example.com:~/ru_address/ru_address/
 
 # Синхронизация документации
-rsync -av README_POSTGRESQL.md CLAUDE.md DEPLOYMENT.md \
-    iuser@geocoder:~/ru_address/
+rsync -av README_POSTGRESQL.md DEPLOYMENT.md \
+    user@server.example.com:~/ru_address/
 ```
 
 ## 2. Установка обновлённого пакета на сервере
 
 ```bash
 # Подключаемся к серверу
-ssh iuser@geocoder
+ssh user@server.example.com
 
 # Переходим в директорию проекта
 cd ~/ru_address
@@ -53,7 +55,7 @@ source venv/bin/activate
 
 # Загрузка региона 77 (Москва) В ДОПОЛНЕНИЕ к существующим данным
 ru_address pipeline \
-    --dsn postgresql://postgres:Qazxsw321@localhost/gar \
+    --dsn postgresql://<user>:<password>@<host>/<db> \
     --jobs 4 \
     --region 77 \
     --schema ~/ru_address/gar_schemas.zip \
@@ -69,7 +71,7 @@ cd ~/ru_address
 source venv/bin/activate
 
 # Шаг 1: Удаляем все таблицы
-psql postgresql://postgres:Qazxsw321@localhost/gar << 'SQL'
+psql postgresql://<user>:<password>@<host>/<db> << 'SQL'
 DROP TABLE IF EXISTS addr_obj CASCADE;
 DROP TABLE IF EXISTS addr_obj_division CASCADE;
 DROP TABLE IF EXISTS addr_obj_params CASCADE;
@@ -107,23 +109,33 @@ ru_address schema \
     --target=psql
 
 # Шаг 3: Применяем схемы
-psql postgresql://postgres:Qazxsw321@localhost/gar -f ~/schema.sql
+psql postgresql://<user>:<password>@<host>/<db> -f ~/schema.sql
 
 # Шаг 4: Загружаем данные нового региона
 ru_address pipeline \
-    --dsn postgresql://postgres:Qazxsw321@localhost/gar \
+    --dsn postgresql://<user>:<password>@<host>/<db> \
     --jobs 4 \
     --region 77 \
     --schema ~/ru_address/gar_schemas.zip \
     /srv/data/gar/gar_xml.zip
 ```
+5. Загрузка конкретных таблиц региона
+ ru_address pipeline \
+      --dsn postgresql://<user>:<password>@<host>/<db> \
+      --jobs 4 \
+      --region 77 \
+      --table HOUSES \
+      --table MUN_HIERARCHY \
+      --table ADDR_OBJ \
+      --schema ~/ru_address/gar_schemas.zip \
+      /srv/data/gar/gar_xml.zip
 
 ### Вариант C: Загрузить все регионы
 
 ```bash
 # Без указания --region загружаются ВСЕ регионы из архива
 ru_address pipeline \
-    --dsn postgresql://postgres:Qazxsw321@localhost/gar \
+    --dsn postgresql://<user>:<password>@<host>/<db> \
     --jobs 4 \
     --schema ~/ru_address/gar_schemas.zip \
     /srv/data/gar/gar_xml.zip
@@ -135,18 +147,18 @@ ru_address pipeline \
 
 ```bash
 # Базовая проверка
-ru_address verify --dsn postgresql://postgres:Qazxsw321@localhost/gar
+ru_address verify --dsn postgresql://<user>:<password>@<host>/<db>
 
 # Проверка с ожидаемым количеством объектов
 # (для региона 83 ожидается ~35000 основных объектов)
 ru_address verify \
-    --dsn postgresql://postgres:Qazxsw321@localhost/gar \
+    --dsn postgresql://<user>:<password>@<host>/<db> \
     --expect 35000
 
 # Для нескольких регионов количество будет больше
 # Например, для двух регионов (83 + 77):
 ru_address verify \
-    --dsn postgresql://postgres:Qazxsw321@localhost/gar \
+    --dsn postgresql://<user>:<password>@<host>/<db> \
     --expect 500000
 ```
 
@@ -189,7 +201,7 @@ unzip -l /srv/data/gar/gar_xml.zip | grep -E "^.*\s[0-9]{2}/.*$" | awk '{print $
 ```bash
 # Пересоздайте схемы вручную
 ru_address schema ~/ru_address/gar_schemas.zip ~/schema.sql --target=psql
-psql postgresql://postgres:Qazxsw321@localhost/gar -f ~/schema.sql
+psql postgresql://<user>:<password>@<host>/<db> -f ~/schema.sql
 ```
 
 ### Ошибка: NULL value in column "name"
@@ -212,7 +224,7 @@ grep -A 3 "String fields are always nullable" \
 
 ```bash
 # В отдельном терминале можно следить за процессом
-watch -n 5 'psql postgresql://postgres:Qazxsw321@localhost/gar -c "
+watch -n 5 'psql postgresql://<user>:<password>@<host>/<db> -c "
 SELECT
   tablename,
   n_live_tup as rows
@@ -248,8 +260,8 @@ LIMIT 10;
 
 ```bash
 # Создать бэкап
-pg_dump postgresql://postgres:Qazxsw321@localhost/gar > ~/gar_backup_$(date +%Y%m%d).sql
+pg_dump postgresql://<user>:<password>@<host>/<db> > ~/gar_backup_$(date +%Y%m%d).sql
 
 # Восстановить из бэкапа
-psql postgresql://postgres:Qazxsw321@localhost/gar < ~/gar_backup_20250106.sql
+psql postgresql://<user>:<password>@<host>/<db> < ~/gar_backup_20250106.sql
 ```
