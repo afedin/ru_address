@@ -1,0 +1,360 @@
+[
+  {
+    "id": "11452155",
+    "address": "г.Санкт-Петербург, Владимирский проспект, дом 10, литера А",
+    "api_response": {
+      "object_id": 5738285,
+      "object_level_id": 11,
+      "operation_type_id": 10,
+      "object_guid": "5784f2af-b923-469d-8e95-474a5de7c13d",
+      "address_type": 2,
+      "full_name": "город Санкт-Петербург, внутригородская территория (внутригородское муниципальное образование) города федерального значения муниципальный округ Владимирский округ, проспект Владимирский, дом 10 литера А, квартира 10",
+      "region_code": 78,
+      "is_active": true,
+      "path": "1414662.95251411.1419276.5736840.5738285",
+      "address_details": {
+        "postal_code": "191025",
+        "ifns_ul": "7840",
+        "ifns_fl": "7840",
+        "okato": "40298566000",
+        "oktmo": "40913000",
+        "cadastral_number": "78:31:0001223:2079",
+        "apart_building": "1",
+        "oktmo_budget": "40913000"
+      },
+      "hierarchy": [
+        {
+          "object_type": "region",
+          "region_code": 78,
+          "name": "Санкт-Петербург",
+          "type_name": "Город",
+          "type_short_name": "г",
+          "type_form_code": 0,
+          "object_id": 1414662,
+          "object_level_id": 1,
+          "object_guid": "c2deb16a-0330-4f05-821f-1d09c93331e6",
+          "full_name": "город Санкт-Петербург",
+          "full_name_short": "г Санкт-Петербург",
+          "kladr_code": "7800000000000",
+          "hierarchy_place": 1,
+          "hist_names": [
+            {
+              "name": "Ленинград",
+              "short_type": "г"
+            }
+          ]
+        },
+        {
+          "name": "муниципальный округ Владимирский округ",
+          "type_name": "внутригородская территория (внутригородское муниципальное образование) города федерального значения",
+          "type_short_name": "вн.тер.г.",
+          "type_form_code": 3,
+          "object_type": "address_object",
+          "object_id": 95251411,
+          "object_level_id": 3,
+          "object_guid": "dff01040-8bce-4bf8-a711-f46d705b4542",
+          "full_name": "внутригородская территория (внутригородское муниципальное образование) города федерального значения муниципальный округ Владимирский округ",
+          "full_name_short": "вн.тер.г. муниципальный округ Владимирский округ",
+          "hierarchy_place": 2
+        },
+        {
+          "name": "Владимирский",
+          "type_name": "Проспект",
+          "type_short_name": "пр-кт",
+          "type_form_code": 0,
+          "object_type": "address_object",
+          "object_id": 1419276,
+          "object_level_id": 8,
+          "object_guid": "4be417cc-203c-4fc1-a647-0ccdd5a7e317",
+          "full_name": "проспект Владимирский",
+          "full_name_short": "пр-кт Владимирский",
+          "kladr_code": "78000000000024400",
+          "hierarchy_place": 6
+        },
+        {
+          "object_type": "house",
+          "add_number1": "А",
+          "add_type1_name": "Литера",
+          "add_type1_short_name": "литера",
+          "add_number2": "",
+          "add_type2_name": "",
+          "add_type2_short_name": "",
+          "number": "10",
+          "type_name": "Дом",
+          "type_short_name": "д.",
+          "object_id": 5736840,
+          "object_level_id": 10,
+          "object_guid": "e5053e27-09e7-465f-9292-538b719bf675",
+          "full_name": "дом 10 литера А",
+          "full_name_short": "д. 10 литера А",
+          "hierarchy_place": 8
+        },
+        {
+          "object_type": "apartment",
+          "number": "10",
+          "type_name": "Квартира",
+          "type_short_name": "кв.",
+          "object_id": 5738285,
+          "object_level_id": 11,
+          "object_guid": "5784f2af-b923-469d-8e95-474a5de7c13d",
+          "full_name": "квартира 10",
+          "full_name_short": "кв. 10",
+          "hierarchy_place": 9
+        }
+      ],
+      "federal_district": {
+        "id": 2,
+        "full_name": "Северо-Западный федеральный округ",
+        "short_name": "СЗФО",
+        "center_id": 1414662
+      },
+      "hierarchy_place": 9
+    }
+  },
+  {
+    "id": "4325108",
+    "address": "Санкт-Петербург, Большевиков проспект, 30 к5",
+    "api_response": {}
+  },
+  {
+    "id": "4394714",
+    "address": "Санкт-Петербург, Ломоносова (Красное Село г.), 9",
+    "api_response": {}
+  },
+  {
+    "id": "4389143",
+    "address": "Санкт-Петербург, Лёни Голикова, 53 к2",
+    "api_response": {}
+  },
+  {
+    "id": "4513903",
+    "address": "Санкт-Петербург, Средняя Садовая (СНТ Пенсионеров Ленинского района тер.), 1",
+    "api_response": {}
+  },
+  {
+    "id": "4433754",
+    "address": "Санкт-Петербург, поселок Лисий Нос, Новая улица, дом 9",
+    "api_response": {
+      "object_id": 50843354,
+      "object_level_id": 10,
+      "operation_type_id": 20,
+      "object_guid": "ce17c89a-3527-4ceb-bbdd-f0915eaf15ab",
+      "address_type": 2,
+      "full_name": "город Санкт-Петербург, внутригородская территория (внутригородское муниципальное образование) города федерального значения поселок Лисий Нос, улица Новая, дом 9 литера А",
+      "region_code": 78,
+      "is_active": true,
+      "path": "1414662.95251435.1416345.50843354",
+      "address_details": {
+        "postal_code": "197755",
+        "ifns_ul": "7814",
+        "ifns_fl": "7814",
+        "okato": "40270555000",
+        "oktmo": "40320000",
+        "cadastral_number": "78:34:0004424:45",
+        "oktmo_budget": "40320000"
+      },
+      "hierarchy": [
+        {
+          "object_type": "region",
+          "region_code": 78,
+          "name": "Санкт-Петербург",
+          "type_name": "Город",
+          "type_short_name": "г",
+          "type_form_code": 0,
+          "object_id": 1414662,
+          "object_level_id": 1,
+          "object_guid": "c2deb16a-0330-4f05-821f-1d09c93331e6",
+          "full_name": "город Санкт-Петербург",
+          "full_name_short": "г Санкт-Петербург",
+          "kladr_code": "7800000000000",
+          "hierarchy_place": 1,
+          "hist_names": [
+            {
+              "name": "Ленинград",
+              "short_type": "г"
+            }
+          ]
+        },
+        {
+          "name": "поселок Лисий Нос",
+          "type_name": "внутригородская территория (внутригородское муниципальное образование) города федерального значения",
+          "type_short_name": "вн.тер.г.",
+          "type_form_code": 3,
+          "object_type": "address_object",
+          "object_id": 95251435,
+          "object_level_id": 3,
+          "object_guid": "8f3dcd7b-3c7a-48aa-88e0-b01f0e165036",
+          "full_name": "внутригородская территория (внутригородское муниципальное образование) города федерального значения поселок Лисий Нос",
+          "full_name_short": "вн.тер.г. поселок Лисий Нос",
+          "hierarchy_place": 2
+        },
+        {
+          "name": "Новая",
+          "type_name": "Улица",
+          "type_short_name": "ул",
+          "type_form_code": 0,
+          "object_type": "address_object",
+          "object_id": 1416345,
+          "object_level_id": 8,
+          "object_guid": "aa1162e7-f915-4dc0-8970-97a0ef1fe9dd",
+          "full_name": "улица Новая",
+          "full_name_short": "ул Новая",
+          "kladr_code": "78000000016004400",
+          "hierarchy_place": 6
+        },
+        {
+          "object_type": "house",
+          "add_number1": "А",
+          "add_type1_name": "Литера",
+          "add_type1_short_name": "литера",
+          "add_number2": "",
+          "add_type2_name": "",
+          "add_type2_short_name": "",
+          "number": "9",
+          "type_name": "Дом",
+          "type_short_name": "д.",
+          "object_id": 50843354,
+          "object_level_id": 10,
+          "object_guid": "ce17c89a-3527-4ceb-bbdd-f0915eaf15ab",
+          "full_name": "дом 9 литера А",
+          "full_name_short": "д. 9 литера А",
+          "hierarchy_place": 8
+        }
+      ],
+      "federal_district": {
+        "id": 2,
+        "full_name": "Северо-Западный федеральный округ",
+        "short_name": "СЗФО",
+        "center_id": 1414662
+      },
+      "hierarchy_place": 8
+    }
+  },
+  {
+    "id": "4409173",
+    "address": "Санкт-Петербург, Невельская, 8а",
+    "api_response": {}
+  },
+  {
+    "id": "4455782",
+    "address": "Санкт-Петербург, садоводство Айсберг, 10-я аллея",
+    "api_response": {}
+  },
+  {
+    "id": "4363168",
+    "address": "Санкт-Петербург, Железноводская, 20",
+    "api_response": {
+      "object_id": 16816850,
+      "object_level_id": 11,
+      "operation_type_id": 10,
+      "object_guid": "41fc1171-3f3c-496c-b564-259f800f7100",
+      "address_type": 2,
+      "full_name": "город Санкт-Петербург, внутригородская территория (внутригородское муниципальное образование) города федерального значения муниципальный округ Остров Декабристов, улица Железноводская, дом 20 литера А, квартира 20",
+      "region_code": 78,
+      "is_active": true,
+      "path": "1414662.95251383.1419545.16814158.16816850",
+      "address_details": {
+        "postal_code": "199155",
+        "ifns_ul": "7801",
+        "ifns_fl": "7801",
+        "okato": "40263565000",
+        "oktmo": "40311000",
+        "cadastral_number": "78:06:0002058:1082",
+        "apart_building": "1",
+        "oktmo_budget": "40311000"
+      },
+      "hierarchy": [
+        {
+          "object_type": "region",
+          "region_code": 78,
+          "name": "Санкт-Петербург",
+          "type_name": "Город",
+          "type_short_name": "г",
+          "type_form_code": 0,
+          "object_id": 1414662,
+          "object_level_id": 1,
+          "object_guid": "c2deb16a-0330-4f05-821f-1d09c93331e6",
+          "full_name": "город Санкт-Петербург",
+          "full_name_short": "г Санкт-Петербург",
+          "kladr_code": "7800000000000",
+          "hierarchy_place": 1,
+          "hist_names": [
+            {
+              "name": "Ленинград",
+              "short_type": "г"
+            }
+          ]
+        },
+        {
+          "name": "муниципальный округ Остров Декабристов",
+          "type_name": "внутригородская территория (внутригородское муниципальное образование) города федерального значения",
+          "type_short_name": "вн.тер.г.",
+          "type_form_code": 3,
+          "object_type": "address_object",
+          "object_id": 95251383,
+          "object_level_id": 3,
+          "object_guid": "15454c80-3a30-4588-af01-997cdc666b02",
+          "full_name": "внутригородская территория (внутригородское муниципальное образование) города федерального значения муниципальный округ Остров Декабристов",
+          "full_name_short": "вн.тер.г. муниципальный округ Остров Декабристов",
+          "hierarchy_place": 2
+        },
+        {
+          "name": "Железноводская",
+          "type_name": "Улица",
+          "type_short_name": "ул",
+          "type_form_code": 0,
+          "object_type": "address_object",
+          "object_id": 1419545,
+          "object_level_id": 8,
+          "object_guid": "d80a5774-c1c5-4291-8d4b-2ede9f325f26",
+          "full_name": "улица Железноводская",
+          "full_name_short": "ул Железноводская",
+          "kladr_code": "78000000000041400",
+          "hierarchy_place": 6
+        },
+        {
+          "object_type": "house",
+          "add_number1": "А",
+          "add_type1_name": "Литера",
+          "add_type1_short_name": "литера",
+          "add_number2": "",
+          "add_type2_name": "",
+          "add_type2_short_name": "",
+          "number": "20",
+          "type_name": "Дом",
+          "type_short_name": "д.",
+          "object_id": 16814158,
+          "object_level_id": 10,
+          "object_guid": "6add4c6d-e2d2-46b7-bcce-a58fffadd950",
+          "full_name": "дом 20 литера А",
+          "full_name_short": "д. 20 литера А",
+          "hierarchy_place": 8
+        },
+        {
+          "object_type": "apartment",
+          "number": "20",
+          "type_name": "Квартира",
+          "type_short_name": "кв.",
+          "object_id": 16816850,
+          "object_level_id": 11,
+          "object_guid": "41fc1171-3f3c-496c-b564-259f800f7100",
+          "full_name": "квартира 20",
+          "full_name_short": "кв. 20",
+          "hierarchy_place": 9
+        }
+      ],
+      "federal_district": {
+        "id": 2,
+        "full_name": "Северо-Западный федеральный округ",
+        "short_name": "СЗФО",
+        "center_id": 1414662
+      },
+      "hierarchy_place": 9
+    }
+  },
+  {
+    "id": "4419622",
+    "address": "Санкт-Петербург, Отрадная (СНТ Красные зори тер.), 2",
+    "api_response": {}
+  }
+]
