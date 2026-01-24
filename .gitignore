@@ -7,6 +7,7 @@
 /log/*
 !/log/.gitkeep
 import.php
+ru_address/scripts
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
